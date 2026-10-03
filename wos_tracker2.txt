@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteout Survival State Hub</title>
+    <!-- Firebase App and Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-dark: #121921;
+            --bg-panel: #1b2631;
+            --bg-input: #243342;
+            --text-main: #f0f4f8;
+            --text-muted: #95a5a6;
+            --accent: #3498db;
+            --accent-hover: #2980b9;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+            --border: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--bg-panel);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auth-status {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #27ae60; }
+        .btn-warning { background-color: var(--warning); color: #121921; }
+        .btn-warning:hover { background-color: #f39c12; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .tab.active {
+            color: white;
+            background-color: var(--bg-panel);
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-input);
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .privacy-notice {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #d2e4f1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: white;
+            background-color: #2c3e50;
+        }
+
+        tr:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .hero-section-title {
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed var(--border);
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .hero-card {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hero-card.locked {
+            border-color: #8e44ad;
+            background-color: rgba(142, 68, 173, 0.05);
+        }
+
+        .hero-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .hero-stars {
+            display: flex;
+            gap: 4px;
+            color: var(--warning);
+        }
+
+        .star-select {
+            width: 100%;
+            background-color: var(--bg-dark);
+            color: white;
+            border: 1px solid var(--border);
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .flex-grow {
+            flex-grow: 1;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .badge-blue { background-color: #2980b9; color: white; }
+        .badge-purple { background-color: #8e44ad; color: white; }
+        .badge-gold { background-color: #f39c12; color: #121921; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>❄️ Whiteout Survival State Hub</h1>
+        <div class="auth-status" id="authStatus">
+            <span>Not Logged In (Guest View)</span>
+            <button class="btn" onclick="openModal('loginModal')">Login / Register</button>
+        </div>
+    </header>
+
+    <div class="privacy-notice">
+        <strong>🔒 Privacy Protocol Notice:</strong> This tracking hub is completely anonymous. No emails, real-world identification names, or private tracking components are requested, processed, or stored. Accounts are mapped securely using unique localized passkeys.
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('rosterTab')">State Roster</button>
+        <button class="tab" onclick="switchTab('quickSearchTab')">⚡ Quick Search (Team Builder)</button>
+        <button class="tab" onclick="switchTab('rallyLogsTab')">⚔️ Rally Testing Log</button>
+        <button class="tab" id="adminTabBtn" style="display:none;" onclick="switchTab('adminTab')">👑 Master Console</button>
+    </div>
+
+    <!-- ROSTER TAB -->
+    <div id="rosterTab" class="tab-content active">
+        <div class="panel" id="playerProfilePanel">
+            <h2 id="formTitle" style="margin-bottom: 15px;">Update My Player Profile</h2>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">Guests can submit a profile for R4/R5 review. Registered members update their verified profiles instantly.</p>
+            
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Player ID (Unique Game Number)</label>
+                        <input type="text" id="p_id" class="form-control" placeholder="e.g. 12345678">
+                    </div>
+                    <div class="form-group">
+                        <label>In-Game Name</label>
+                        <input type="text" id="p_name" class="form-control" placeholder="Current IGN">
+                    </div>
+                    <div class="grid-2" style="gap:10px;">
+                        <div class="form-group">
+                            <label>Alliance Name</label>
+                            <input type="text" id="p_alliance" class="form-control" placeholder="TAG">
+                        </div>
+                        <div class="form-group">
+                            <label>Alliance Rank</label>
+                            <select id="p_rank" class="form-control">
+                                <option value="R1">R1</option>
+                                <option value="R2">R2</option>
+                                <option value="R3">R3</option>
+                                <option value="R4">R4</option>
+                                <option value="R5">R5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Power</label>
+                        <input type="number" id="p_power" class="form-control" placeholder="e.g. 85000000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Troop Tiers (Multi-Select)</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" id="t_fc7"> FC7</label>
+                            <label class="checkbox-item"><input type="checkbox" id="t_fc8"> FC8</label>
+                            <label class="checkbox-item"><input type="checkbox" id="t_fc9"> FC9</label>
+                            <label class="checkbox-item"><input type="checkbox" id="t_fc10"> FC10</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Helios Troops Type (Multi-Select)</label>
+                        <div class="checkbox-group" style="grid-template-columns: 1fr;">
+                            <label class="checkbox-item"><input type="checkbox" id="h_inf"> Helios Infantry</label>
+                            <label class="checkbox-item"><input type="checkbox" id="h_lan"> Helios Lancers</label>
+                            <label class="checkbox-item"><input type="checkbox" id="h_mar"> Helios Marksman</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-weight:600; display:block; margin-bottom:10px;">Gold Heroes Matrix (Star Level Tracking)</label>
+                    <div style="max-height: 450px; overflow-y: auto; padding-right: 5px;" id="goldHeroInputContainer">
+                        <!-- Dynamically populated via JS grouped by generation -->
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; display:flex; gap:10px;">
+                <button class="btn btn-success" onclick="submitPlayerProfile()">Submit Profile Entry</button>
+                <button class="btn btn-danger" onclick="clearPlayerForm()">Clear Form</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 15px;">Active State Roster Grid</h2>
+            <div class="search-container">
+                <input type="text" id="rosterSearch" class="form-control flex-grow" placeholder="Search roster instantly by Player Name or Unique ID..." oninput="renderRosterGrid()">
+                <button class="btn" onclick="exportDataLocal()">Backup Data (Local JSON)</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="rosterTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortRoster('id')">Player ID ↕</th>
+                            <th onclick="sortRoster('name')">Player Name ↕</th>
+                            <th onclick="sortRoster('alliance')">Alliance ↕</th>
+                            <th onclick="sortRoster('rank')">Rank ↕</th>
+                            <th onclick="sortRoster('power')">Total Power ↕</th>
+                            <th>Troop Capabilities</th>
+                            <th>Key 5★ Gold Heroes</th>
+                            <th id="actionsHeader" style="display:none;">Management Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rosterTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK SEARCH TAB -->
+    <div id="quickSearchTab" class="tab-content">
+        <div class="panel">
+            <h2 style="margin-bottom: 15px;">⚡ Battle Team Filter Bridge</h2>
+            <p style="color:var(--text-muted); margin-bottom: 15px;">Quickly pinpoint optimal rally joiners and backup squads matching core parameters.</p>
+            
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Filter by Troop Level Requirement</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" class="filter-tier" value="FC7" onchange="runQuickSearch()"> FC7</label>
+                            <label class="checkbox-item"><input type="checkbox" class="filter-tier" value="FC8" onchange="runQuickSearch()"> FC8</label>
+                            <label class="checkbox-item"><input type="checkbox" class="filter-tier" value="FC9" onchange="runQuickSearch()"> FC9</label>
+                            <label class="checkbox-item"><input type="checkbox" class="filter-tier" value="FC10" onchange="runQuickSearch()"> FC10</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Filter by Elite Helios Capability</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" class="filter-helios" value="Helios Infantry" onchange="runQuickSearch()"> Infantry</label>
+                            <label class="checkbox-item"><input type="checkbox" class="filter-helios" value="Helios Lancers" onchange="runQuickSearch()"> Lancers</label>
+                            <label class="checkbox-item"><input type="checkbox" class="filter-helios" value="Helios Marksman" onchange="runQuickSearch()"> Marksman</label>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label>Require Maxed (5-Star) Gold Heroes</label>
+                        <p style="color:var(--text-muted); font-size:12px; margin-bottom:5px;">Select legendary characters that must be maxed out for deployment:</p>
+                        <select id="filterHeroSelect" class="form-control" multiple style="height:110px;" onchange="runQuickSearch()">
+                            <!-- Generated dynamically -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Matching Combat Personnel Results</h3>
+            <table id="searchResultTable">
+                <thead>
+                    <tr>
+                        <th>Player ID</th>
+                        <th>Player Name</th>
+                        <th>Alliance</th>
+                        <th>Rank</th>
+                        <th>Total Power</th>
+                        <th>Unlocks Matches</th>
+                    </tr>
+                </thead>
+                <tbody id="searchResultsBody">
+                    <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Adjust parameters above to scan the roster pool.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RALLY LOGS TAB -->
+    <div id="rallyLogsTab" class="tab-content">
+        <div class="panel" id="rallyLogEntryPanel" style="display:none;">
+            <h2 style="margin-bottom:15px;">Add New Combat Testing Record</h2>
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Rally Lead Player Name / ID</label>
+                        <input type="text" id="rl_lead" class="form-control" placeholder="Rally Captain Identifier">
+                    </div>
+                    <div class="form-group">
+                        <label>Deployment Ratios (Infantry/Lancers/Marksmen)</label>
+                        <input type="text" id="rl_ratio" class="form-control" placeholder="e.g. 60/10/30 or 10/10/80">
+                    </div>
+                    <div class="form-group">
+                        <label>Squad Captain Heroes (3 Primary Leads Used)</label>
+                        <input type="text" id="rl_captains" class="form-control" placeholder="e.g. Flint / Alonso / Molly">
+                    </div>
+                    <div class="form-group">
+                        <label>Joiner Expedition Buff Heroes (4 Flagged Supports)</label>
+                        <input type="text" id="rl_joiners" class="form-control" placeholder="e.g. Jessie, Sergey, Patrick, Bahiti">
+                    </div>
+                    <div class="form-group">
+                        <label>Test Result Metrics (Damage / Total Score)</label>
+                        <input type="text" id="rl_metrics" class="form-control" placeholder="e.g. 1.2B Damage / Win">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-weight:600; display:block; margin-bottom:10px;">Active Tactical Server Buffs Selector</label>
+                    <div class="checkbox-group" style="grid-template-columns: 1fr; gap:8px;">
+                        <label class="checkbox-item"><input type="checkbox" id="b_boost10"> City Combat Attack/Defense Boost Activated (+10%)</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_boost20"> Mega City Combat Boost Activated (+20%)</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_def"> Council Position Holder: Minister of Defense Boost</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_strat"> Council Position Holder: Minister of Strategy Boost</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_pres"> Supreme State President Skill Matrix Engaged</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_fort"> Fortress / Sunfire Stronghold Control Buffer Active</label>
+                        <label class="checkbox-item"><input type="checkbox" id="b_pet"> Active Combat Pet Skill Triggered Prior to March</label>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-success" style="margin-top:15px;" onclick="submitRallyLog()">Commit Test Log Row</button>
+        </div>
+
+        <div class="panel">
+            <h2>State Combat Evaluation & Testing Ledger</h2>
+            <div style="overflow-x: auto; margin-top:15px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lead Profile</th>
+                            <th>March Ratio</th>
+                            <th>Command Captains</th>
+                            <th>Joiner Supports</th>
+                            <th>Active Buff Profile</th>
+                            <th>Battle Metrics</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rallyLogsTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MASTER ADMINISTRATIVE CONSOLE -->
+    <div id="adminTab" class="tab-content">
+        <div class="panel">
+            <h2>👑 Server Authority Configuration Desk</h2>
+            <p style="color:var(--text-muted); margin-bottom:20px;">Master Administrator overrides and structural clearance mapping console.</p>
+            
+            <div class="grid-2">
+                <div>
+                    <h3>Pending Guest Submissions Review Matrix</h3>
+                    <div id="pendingReviewContainer" style="margin-top:10px;">
+                        <!-- Generated dynamic checklist logs -->
+                        <p style="color:var(--text-muted); font-style:italic;">No pending guest submissions requiring authorization profiles.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3>User Clearances Access Matrix</h3>
+                    <div style="overflow-x: auto; margin-top:10px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Account User</th>
+                                    <th>Role Clearance</th>
+                                    <th>Toggle Clearance Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userRoleManagementTable">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;" id="modalAuthTitle">Anonymous Hub Gate</h3>
+            <div class="form-group">
+                <label>Anonymous Username</label>
+                <input type="text" id="auth_user" class="form-control" placeholder="Select unique identity tracker string">
+            </div>
+            <div class="form-group">
+                <label>Secure Passkey</label>
+                <input type="password" id="auth_pass" class="form-control" placeholder="Private passkey token alignment">
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                <div>
+                    <button class="btn" onclick="executeLogin()">Login</button>
+                    <button class="btn btn-warning" onclick="executeRegister()">Create Account</button>
+                </div>
+                <button class="btn btn-danger" onclick="closeModal('loginModal')">Cancel</button>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:15px; text-align:center;">
+                ⚠️ Master Root Admin Key overrides can be entered cleanly directly into the Passkey parameter field.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE DEFINITIONS & REQUISITE MATRICES ---
+        const BLUE_HEROES = ['Cloris', 'Charlie', 'Smith', 'Eugene'];
+        const PURPLE_HEROES = ['Ling Xue', 'Lumak', 'Sergey', 'Patrick', 'Bahiti', 'Jessie', 'Gina', 'Seo-Yoon', 'Jasser'];
+        
+        const GOLD_HEROES_BY_GEN = {
+            "Generation 1": ["Jeronimo", "Natalia", "Molly", "Zinman"],
+            "Generation 2": ["Flint", "Alonso", "Philly"],
+            "Generation 3": ["Mia", "Logan", "Greg"],
+            "Generation 4": ["Lynn", "Ahmose", "Reina"],
+            "Generation 5": ["Hector", "Norah", "Gwen"],
+            "Generation 6": ["Renee", "Wayne", "Wu Ming"],
+            "Generation 7": ["Bradley", "Edith", "Gordon"],
+            "Generation 8": ["Gatot", "Sonya", "Hendrik"],
+            "Generation 9": ["Fred", "Magnus", "Xura"],
+            "Generation 10": ["Blanchette", "Freya", "Gregory"]
+        };
+
+        // Live Operational State Storage Engines (Local Memory Default / Sync Engines)
+        let playersDB = {};
+        let rallyLogsDB = [];
+        let systemUsers = {}; // Registered credential objects fallback
+        let currentUser = { username: 'Guest', role: 'Guest', linkedId: null };
+        let rosterSortKey = 'power';
+        let rosterSortAsc = false;
+
+        // --- FIREBASE INITIALIZATION ENGINE GATES ---
+        // <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCEXMwp3jn1xWtHabsdUsjU4D3IdDEj0PQ",
+    authDomain: "wos-state-tracker.firebaseapp.com",
+    projectId: "wos-state-tracker",
+    storageBucket: "wos-state-tracker.firebasestorage.app",
+    messagingSenderId: "1038344232251",
+    appId: "1:1038344232251:web:1c84c7421a46ab092a6b1e",
+    measurementId: "G-06WV9KLP41"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+        const firebaseConfig = null; 
+
+        let db = null;
+        let useFirebase = false;
+
+        if (firebaseConfig && typeof firebase !== 'undefined') {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                useFirebase = true;
+                console.log("Firebase Engine Online & Synced.");
+            } catch (e) {
+                console.error("Firebase config parsing initialization failed.", e);
+            }
+        }
+
+        // --- CORE APPLICATION INITIALIZATION AND RENDERING MATRIX ---
+        window.addEventListener('DOMContentLoaded', () => {
+            buildGoldHeroFormInputs();
+            buildGoldHeroDropdownFilters();
+            loadInitialDatabase();
+        });
+
+        function buildGoldHeroFormInputs() {
+            const container = document.getElementById('goldHeroInputContainer');
+            container.innerHTML = '';
+            
+            // Render Permanent Locked 5 Star Arrays in view background
+            let lockedHtml = `<div class="hero-section-title">Static Vault Heroes (Locked 5★ Base)</div><div class="hero-grid">`;
+            BLUE_HEROES.concat(PURPLE_HEROES).forEach(hero => {
+                const tierClass = BLUE_HEROES.includes(hero) ? 'badge-blue' : 'badge-purple';
+                lockedHtml += `
+                    <div class="hero-card locked">
+                        <div class="hero-name">${hero} <span class="badge ${tierClass}">${BLUE_HEROES.includes(hero)?'Blue':'Purple'}</span></div>
+                        <div class="hero-stars">⭐⭐⭐⭐⭐</div>
+                    </div>`;
+            });
+            lockedHtml += `</div>`;
+            container.innerHTML += lockedHtml;
+
+            // Render Adjustable Gold Matrices
+            for (const [gen, heroes] of Object.entries(GOLD_HEROES_BY_GEN)) {
+                let genHtml = `<div class="hero-section-title">${gen} Legendary Tier</div><div class="hero-grid">`;
+                heroes.forEach(hero => {
+                    genHtml += `
+                        <div class="hero-card">
+                            <div class="hero-name">${hero} <span class="badge badge-gold">Gold</span></div>
+                            <select id="hero_star_${hero.replace(/\s+/g, '_')}" class="star-select">
+                                <option value="0">0 Stars (Locked)</option>
+                                <option value="1">1 Star ⭐</option>
+                                <option value="2">2 Stars ⭐⭐</option>
+                                <option value="3">3 Stars ⭐⭐⭐</option>
+                                <option value="4">4 Stars ⭐⭐⭐⭐</option>
+                                <option value="5">5 Stars Max ⭐⭐⭐⭐⭐</option>
+                            </select>
+                        </div>`;
+                });
+                genHtml += `</div>`;
+                container.innerHTML += genHtml;
+            }
+        }
+
+        function buildGoldHeroDropdownFilters() {
+            const select = document.getElementById('filterHeroSelect');
+            select.innerHTML = '';
+            for (const [gen, heroes] of Object.entries(GOLD_HEROES_BY_GEN)) {
+                heroes.forEach(hero => {
+                    const opt = document.createElement('option');
+                    opt.value = hero;
+                    opt.textContent = `${hero} (${gen})`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        // --- NAVIGATION HANDLERS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- AUTHENTICATION LAYER MANAGEMENT SYSTEM ---
+        function executeLogin() {
+            const user = document.getElementById('auth_user').value.trim();
+            const pass = document.getElementById('auth_pass').value.trim();
+
+            if(!user || !pass) return alert("Fill out all identity fields.");
+
+            // Master Administrator Overrides
+            if (pass === "102953") {
+                currentUser = { username: user || 'MasterAdmin', role: 'MasterAdmin', linkedId: null };
+                configureUIForRole();
+                closeModal('loginModal');
+                return alert("Access Granted: Root Authority Cleared.");
+            }
+
+            // Sync Verification Strategy
+            if (useFirebase) {
+                db.collection("users").doc(user).get().then(doc => {
+                    if (doc.exists && doc.data().passkey === pass) {
+                        currentUser = doc.data();
+                        configureUIForRole();
+                        closeModal('loginModal');
+                        alert(`Welcome back, ${user}. Role: ${currentUser.role}`);
+                    } else {
+                        alert("Invalid identity alignment parameters.");
+                    }
+                });
+            } else {
+                if (systemUsers[user] && systemUsers[user].passkey === pass) {
+                    currentUser = systemUsers[user];
+                    configureUIForRole();
+                    closeModal('loginModal');
+                    alert(`Welcome back, ${user}. Role: ${currentUser.role}`);
+                } else {
+                    alert("Invalid identity credentials.");
+                }
+            }
+        }
+
+        function executeRegister() {
+            const user = document.getElementById('auth_user').value.trim();
+            const pass = document.getElementById('auth_pass').value.trim();
+
+            if(!user || !pass) return alert("Define username and passkey components clearly.");
+            if(pass === "102953") return alert("Reserved authority cryptographic key.");
+
+            const newUserObj = { username: user, passkey: pass, role: 'Player', linkedId: null };
+
+            if (useFirebase) {
+                db.collection("users").doc(user).get().then(doc => {
+                    if (doc.exists) {
+                        alert("Identity identity profile variant signature already exists.");
+                    } else {
+                        db.collection("users").doc(user).set(newUserObj).then(() => {
+                            systemUsers[user] = newUserObj;
+                            currentUser = newUserObj;
+                            configureUIForRole();
+                            closeModal('loginModal');
+                            alert("Account established securely via fully anonymous allocation frameworks.");
+                        });
+                    }
+                });
+            } else {
+                if (systemUsers[user]) return alert("Identity already configured locally.");
+                systemUsers[user] = newUserObj;
+                currentUser = newUserObj;
+                configureUIForRole();
+                closeModal('loginModal');
+                alert("Account established locally.");
+            }
+        }
+
+        function executeLogout() {
+            currentUser = { username: 'Guest', role: 'Guest', linkedId: null };
+            configureUIForRole();
+            alert("Disconnected session.");
+        }
+
+        function configureUIForRole() {
+            const container = document.getElementById('authStatus');
+            if (currentUser.role === 'Guest') {
+                container.innerHTML = `<span>Not Logged In (Guest View)</span> <button class="btn" onclick="openModal('loginModal')">Login / Register</button>`;
+                document.getElementById('adminTabBtn').style.display = 'none';
+                document.getElementById('actionsHeader').style.display = 'none';
+                document.getElementById('rallyLogEntryPanel').style.display = 'none';
+                document.getElementById('formTitle').textContent = "Submit Profile Data (Requires Approval)";
+            } else {
+                container.innerHTML = `<span>Logged in as: <strong>${currentUser.username}</strong> [${currentUser.role}]</span> <button class="btn btn-danger" onclick="executeLogout()">Logout</button>`;
+                
+                if (currentUser.role === 'MasterAdmin' || currentUser.role === 'R4' || currentUser.role === 'R5') {
+                    document.getElementById('adminTabBtn').style.display = 'block';
+                    document.getElementById('actionsHeader').style.display = 'table-cell';
+                    document.getElementById('rallyLogEntryPanel').style.display = 'block';
+                    document.getElementById('formTitle').textContent = "Administrative Force Overwrite Profile Manager";
+                } else if (currentUser.role === 'RallyLead') {
+                    document.getElementById('adminTabBtn').style.display = 'none';
+                    document.getElementById('actionsHeader').style.display = 'none';
+                    document.getElementById('rallyLogEntryPanel').style.display = 'block';
+                    document.getElementById('formTitle').textContent = "Update My Linked Profile Hub";
+                } else {
+                    document.getElementById('adminTabBtn').style.display = 'none';
+                    document.getElementById('actionsHeader').style.display = 'none';
+                    document.getElementById('rallyLogEntryPanel').style.display = 'none';
+                    document.getElementById('formTitle').textContent = "Update My Linked Profile Hub";
+                }
+            }
+            renderRosterGrid();
+            renderRallyLogsGrid();
+            renderAdminPanelUserMatrix();
+        }
+
+        // --- PROFILE SUBMISSION AND STORAGE ENGINE DATA HANDLERS ---
+        function submitPlayerProfile() {
+            const id = document.getElementById('p_id').value.trim();
+            const name = document.getElementById('p_name').value.trim();
+            const alliance = document.getElementById('p_alliance').value.trim().toUpperCase();
+            const rank = document.getElementById('p_rank').value;
+            const power = parseInt(document.getElementById('p_power').value) || 0;
+
+            if (!id || !name || !alliance) return alert("Required parameters: ID Number, Name, Alliance TAG.");
+
+            // Extract multi-select checkbox structures
+            const tiers = [];
+            if(document.getElementById('t_fc7').checked) tiers.push('FC7');
+            if(document.getElementById('t_fc8').checked) tiers.push('FC8');
+            if(document.getElementById('t_fc9').checked) tiers.push('FC9');
+            if(document.getElementById('t_fc10').checked) tiers.push('FC10');
+
+            const helios = [];
+            if(document.getElementById('h_inf').checked) helios.push('Helios Infantry');
+            if(document.getElementById('h_lan').checked) helios.push('Helios Lancers');
+            if(document.getElementById('h_mar').checked) helios.push('Helios Marksman');
+
+            // Extract Hero selections
+            const goldHeroStars = {};
+            for (const heroes of Object.values(GOLD_HERO_BY_GEN)) {
+                heroes.forEach(hero => {
+                    const elId = `hero_star_${hero.replace(/\s+/g, '_')}`;
+                    goldHeroStars[hero] = parseInt(document.getElementById(elId).value) || 0;
+                });
+            }
+
+            const profilePayload = {
+                id, name, alliance, rank, power,
+                tiers, helios, goldHeroStars,
+                timestamp: Date.now(),
+                approved: (currentUser.role === 'MasterAdmin' || currentUser.role === 'R4' || currentUser.role === 'R5')
+            };
+
+            // Gate validations check linked updates restrictions mapping
+            if (currentUser.role === 'Player' && currentUser.linkedId && currentUser.linkedId !== id) {
+                return alert("Access Denied: Your account is locked to a separate Player ID.");
+            }
+
+            if (useFirebase) {
+                const targetColl = profilePayload.approved ? "players" : "submissions";
+                db.collection(targetColl).doc(id).set(profilePayload).then(() => {
+                    if (currentUser.role === 'Player' && !currentUser.linkedId) {
+                        currentUser.linkedId = id;
+                        db.collection("users").doc(currentUser.username).update({ linkedId: id });
+                    }
+                    alert(profilePayload.approved ? "Profile updated live instantly." : "Submission queued for administrative R4/R5 clearance reviews.");
+                    clearPlayerForm();
+                    loadInitialDatabase();
+                });
+            } else {
+                if (profilePayload.approved) {
+                    playersDB[id] = profilePayload;
+                    if (currentUser.role === 'Player' && !currentUser.linkedId) currentUser.linkedId = id;
+                    alert("Profile synchronized to core ledger cache.");
+                } else {
+                    if (!window.localSubmissionsQueue) window.localSubmissionsQueue = [];
+                    window.localSubmissionsQueue.push(profilePayload);
+                    alert("Submission held locally inside browser cache queue for admin verification testing.");
+                }
+                clearPlayerForm();
+                renderRosterGrid();
+                renderAdminPanelUserMatrix();
+            }
+        }
+
+        function loadInitialDatabase() {
+            if (useFirebase) {
+                db.collection("players").onSnapshot(snapshot => {
+                    playersDB = {};
+                    snapshot.forEach(doc => { playersDB[doc.id] = doc.data(); });
+                    renderRosterGrid();
+                    runQuickSearch();
+                });
+                db.collection("rally_logs").onSnapshot(snapshot => {
+                    rallyLogsDB = [];
+                    snapshot.forEach(doc => { rallyLogsDB.push(doc.data()); });
+                    renderRallyLogsGrid();
+                });
+            } else {
+                // Instantiation Mock Defaults matching requested specifications layout
+                playersDB = {
+                    "8821102": { id: "8821102", name: "Jäger_01", alliance: "WOS", rank: "R4", power: 125000000, tiers: ["FC8", "FC9"], helios: ["Helios Infantry"], goldHeroStars: {"Flint": 5, "Alonso": 4, "Molly": 5}, approved: true },
+                    "7334910": { id: "7334910", name: "FrostBite", alliance: "ICE", rank: "R3", power: 98000000, tiers: ["FC7", "FC8"], helios: ["Helios Marksman"], goldHeroStars: {"Jeronimo": 5, "Molly": 4}, approved: true }
+                };
+                renderRosterGrid();
+            }
+        }
+
+        function renderRosterGrid() {
+            const tbody = document.getElementById('rosterTableBody');
+            tbody.innerHTML = '';
+            const searchVal = document.getElementById('rosterSearch').value.toLowerCase().trim();
+
+            let playersArray = Object.values(playersDB);
+
+            // Filter logic matches
+            if (searchVal) {
+                playersArray = playersArray.filter(p => p.name.toLowerCase().includes(searchVal) || p.id.includes(searchVal));
+            }
+
+            // Sorting logistics arrays metrics mapping
+            playersArray.sort((a, b) => {
+                let fieldA = a[rosterSortKey];
+                let fieldB = b[rosterSortKey];
+                
+                if (typeof fieldA === 'string') {
+                    return rosterSortAsc ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
+                } else {
+                    return rosterSortAsc ? fieldA - fieldB : fieldB - fieldA;
+                }
+            });
+
+            const isAdmin = ['MasterAdmin', 'R4', 'R5'].includes(currentUser.role);
+
+            playersArray.forEach(p => {
+                let maxedGolds = [];
+                if (p.goldHeroStars) {
+                    for (const [hero, stars] of Object.entries(p.goldHeroStars)) {
+                        if (stars === 5) maxedGolds.push(hero);
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${p.id}</code></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge badge-blue">${p.alliance}</span></td>
+                    <td>${p.rank}</td>
+                    <td>${(p.power / 1000000).toFixed(1)}M</td>
+                    <td><small>${p.tiers.join(', ') || 'None'} <br> ${p.helios.join(', ') || 'No Helios'}</small></td>
+                    <td><small>${maxedGolds.join(', ') || 'None Maxed'}</small></td>
+                    ${isAdmin ? `<td>
+                        <button class="btn btn-warning" style="padding:4px 8px; font-size:12px;" onclick="editPlayerInline('${p.id}')">Edit</button>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="deletePlayerInline('${p.id}')">Remove</button>
+                    </td>` : ''}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortRoster(key) {
+            if (rosterSortKey === key) {
+                rosterSortAsc = !rosterSortAsc;
+            } else {
+                rosterSortKey = key;
+                rosterSortAsc = true;
+            }
+            renderRosterGrid();
+        }
+
+        function deletePlayerInline(id) {
+            if (!confirm("Are you sure you want to permanently delete this player record from the live database?")) return;
+            if (useFirebase) {
+                db.collection("players").doc(id).delete().then(() => alert("Record wiped."));
+            } else {
+                delete playersDB[id];
+                renderRosterGrid();
+            }
+        }
+
+        function editPlayerInline(id) {
+            const p = playersDB[id];
+            if (!p) return;
+            document.getElementById('p_id').value = p.id;
+            document.getElementById('p_name').value = p.name;
+            document.getElementById('p_alliance').value = p.alliance;
+            document.getElementById('p_rank').value = p.rank;
+            document.getElementById('p_power').value = p.power;
+            
+            document.getElementById('t_fc7').checked = p.tiers.includes('FC7');
+            document.getElementById('t_fc8').checked = p.tiers.includes('FC8');
+            document.getElementById('t_fc9').checked = p.tiers.includes('FC9');
+            document.getElementById('t_fc10').checked = p.tiers.includes('FC10');
+
+            document.getElementById('h_inf').checked = p.helios.includes('Helios Infantry');
+            document.getElementById('h_lan').checked = p.helios.includes('Helios Lancers');
+            document.getElementById('h_mar').checked = p.helios.includes('Helios Marksman');
+
+            if (p.goldHeroStars) {
+                for (const [hero, stars] of Object.entries(p.goldHeroStars)) {
+                    const el = document.getElementById(`hero_star_${hero.replace(/\s+/g, '_')}`);
+                    if(el) el.value = stars;
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function clearPlayerForm() {
+            document.getElementById('p_id').value = '';
+            document.getElementById('p_name').value = '';
+            document.getElementById('p_alliance').value = '';
+            document.getElementById('p_power').value = '';
+            document.querySelectorAll('#playerProfilePanel input[type="checkbox"]').forEach(c => c.checked = false);
+            document.querySelectorAll('#playerProfilePanel select.star-select').forEach(s => s.value = 0);
+        }
+
+        // --- QUICK SEARCH COMBAT SQUAD FILTERS ENGINE ---
+        function runQuickSearch() {
+            const tbody = document.getElementById('searchResultsBody');
+            tbody.innerHTML = '';
+
+            const reqTiers = Array.from(document.querySelectorAll('.filter-tier:checked')).map(el => el.value);
+            const reqHelios = Array.from(document.querySelectorAll('.filter-helios:checked')).map(el => el.value);
+            
+            const selectHeroEl = document.getElementById('filterHeroSelect');
+            const reqHeroes = Array.from(selectHeroEl.selectedOptions).map(opt => opt.value);
+
+            let matches = Object.values(playersDB);
+
+            // Filter process checks logic
+            if (reqTiers.length > 0) {
+                matches = matches.filter(p => reqTiers.some(t => p.tiers.includes(t)));
+            }
+            if (reqHelios.length > 0) {
+                matches = matches.filter(p => reqHelios.every(h => p.helios.includes(h)));
+            }
+            if (reqHeroes.length > 0) {
+                matches = matches.filter(p => p.goldHeroStars && reqHeroes.every(h => p.goldHeroStars[h] === 5));
+            }
+
+            if (matches.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No deployment configurations match your exact filtering criteria.</td></tr>`;
+                return;
+            }
+
+            matches.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${p.id}</code></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge badge-blue">${p.alliance}</span></td>
+                    <td>${p.rank}</td>
+                    <td>${(p.power / 1000000).toFixed(1)}M</td>
+                    <td><span style="color:var(--success);">✔ Valid Joiner Profile</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- RALLY COMBAT EVALUATION LEDGER MODULE ---
+        function submitRallyLog() {
+            const lead = document.getElementById('rl_lead').value.trim();
+            const ratio = document.getElementById('rl_ratio').value.trim();
+            const captains = document.getElementById('rl_captains').value.trim();
+            const joiners = document.getElementById('rl_joiners').value.trim();
+            const metrics = document.getElementById('rl_metrics').value.trim();
+
+            if(!lead || !ratio) return alert("Lead Name/ID and deployment March Ratio parameters are mandatory.");
+
+            const activeBuffs = [];
+            if(document.getElementById('b_boost10').checked) activeBuffs.push('10% City Boost');
+            if(document.getElementById('b_boost20').checked) activeBuffs.push('20% City Boost');
+            if(document.getElementById('b_def').checked) activeBuffs.push('Min of Defense');
+            if(document.getElementById('b_strat').checked) activeBuffs.push('Min of Strategy');
+            if(document.getElementById('b_pres').checked) activeBuffs.push('President Active Buff');
+            if(document.getElementById('b_fort').checked) activeBuffs.push('Facility Control');
+            if(document.getElementById('b_pet').checked) activeBuffs.push('Combat Pet Trigger');
+
+            const logPayload = {
+                lead, ratio, captains, joiners, metrics, activeBuffs,
+                id: 'log_' + Date.now()
+            };
+
+            if (useFirebase) {
+                db.collection("rally_logs").doc(logPayload.id).set(logPayload).then(() => {
+                    alert("Combat testing log appended to live timeline ledger.");
+                    clearRallyLogForm();
+                });
+            } else {
+                rallyLogsDB.push(logPayload);
+                alert("Combat entry logged locally.");
+                clearRallyLogForm();
+                renderRallyLogsGrid();
+            }
+        }
+
+        function renderRallyLogsGrid() {
+            const tbody = document.getElementById('rallyLogsTableBody');
+            tbody.innerHTML = '';
+
+            if (rallyLogsDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No testing log rows recorded yet.</td></tr>`;
+                return;
+            }
+
+            rallyLogsDB.forEach(l => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${l.lead}</strong></td>
+                    <td><code>${l.ratio}</code></td>
+                    <td>${l.captains || 'Not Documented'}</td>
+                    <td><small>${l.joiners || 'Standard Filler'}</small></td>
+                    <td><small>${l.activeBuffs.join(', ') || 'No Active Buffs (Raw Base)'}</small></td>
+                    <td><span style="color:var(--warning); font-weight:600;">${l.metrics}</span></td>
+                    <td>
+                        ${['MasterAdmin','R4','R5'].includes(currentUser.role) ? `<button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteRallyLogInline('${l.id}')">Delete</button>` : 'Locked'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteRallyLogInline(id) {
+            if(!confirm("Remove this combat log index line?")) return;
+            if (useFirebase) {
+                db.collection("rally_logs").doc(id).delete();
+            } else {
+                rallyLogsDB = rallyLogsDB.filter(l => l.id !== id);
+                renderRallyLogsGrid();
+            }
+        }
+
+        function clearRallyLogForm() {
+            document.getElementById('rl_lead').value = '';
+            document.getElementById('rl_ratio').value = '';
+            document.getElementById('rl_captains').value = '';
+            document.getElementById('rl_joiners').value = '';
+            document.getElementById('rl_metrics').value = '';
+            document.querySelectorAll('#rallyLogsTab input[type="checkbox"]').forEach(c => c.checked = false);
+        }
+
+        // --- ADMINISTRATIVE AUTHORIZATION CONSOLE MODULE ---
+        function renderAdminPanelUserMatrix() {
+            const tbody = document.getElementById('userRoleManagementTable');
+            tbody.innerHTML = '';
+            
+            // Fallback list representation framework parameters mapping
+            const mockUsers = useFirebase ? [] : Object.values(systemUsers);
+            
+            if (!useFirebase && mockUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No user identities registered inside cache.</td></tr>`;
+            }
+
+            mockUsers.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${u.username}</code></td>
+                    <td><span class="badge badge-purple">${u.role}</span></td>
+                    <td>
+                        <button class="btn" style="padding:2px 6px; font-size:11px;" onclick="updateUserRoleMock('${u.username}', 'R5')">R5</button>
+                        <button class="btn btn-warning" style="padding:2px 6px; font-size:11px;" onclick="updateUserRoleMock('${u.username}', 'RallyLead')">Lead</button>
+                        <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="updateUserRoleMock('${u.username}', 'Player')">Strip</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Handle Review Queues for Guest Submissions inputs
+            const pReview = document.getElementById('pendingReviewContainer');
+            if (useFirebase) {
+                db.collection("submissions").get().then(snap => {
+                    pReview.innerHTML = '';
+                    if(snap.empty) pReview.innerHTML = `<p style="color:var(--text-muted); font-style:italic;">No pending guest submissions requiring parameters check.</p>`;
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        pReview.innerHTML += `
+                            <div style="background:var(--bg-input); padding:10px; border:1px solid var(--border); margin-bottom:8px; border-radius:4px;">
+                                <strong>${d.name} [${d.id}]</strong> - Alliance: ${d.alliance} <br>
+                                <button class="btn btn-success" style="padding:2px 6px; font-size:11px; margin-top:5px;" onclick="approveSubmissionFirebase('${d.id}')">Approve Live</button>
+                            </div>`;
+                    });
+                });
+            }
+        }
+
+        function updateUserRoleMock(user, newRole) {
+            if(systemUsers[user]) {
+                systemUsers[user].role = newRole;
+                alert(`Role updated locally for ${user} to ${newRole}`);
+                renderAdminPanelUserMatrix();
+                configureUIForRole();
+            }
+        }
+
+        function approveSubmissionFirebase(id) {
+            db.collection("submissions").doc(id).get().then(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    data.approved = true;
+                    db.collection("players").doc(id).set(data).then(() => {
+                        db.collection("submissions").doc(id).delete().then(() => {
+                            alert("Profile authorized and compiled to master system index grid.");
+                            renderAdminPanelUserMatrix();
+                        });
+                    });
+                }
+            });
+        }
+
+        // --- LOCAL DATA BACKUP EXPORT LOGISTICS MATRIX ---
+        function exportDataLocal() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({players: playersDB, logs: rallyLogsDB}));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "wos_state_hub_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>
